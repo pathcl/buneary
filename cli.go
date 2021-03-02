@@ -7,6 +7,7 @@ import (
 	"io"
 	"os"
 	"os/signal"
+	"strconv"
 	"strings"
 	"syscall"
 
@@ -485,13 +486,16 @@ func runGetQueues(options *globalOptions, args []string) error {
 	}
 
 	table := tablewriter.NewWriter(os.Stdout)
-	table.SetHeader([]string{"Name", "Durable", "Auto-Delete"})
+	table.SetHeader([]string{"Name", "Durable", "Auto-Delete", "Leader", "Messages", "MessagesUnAck"})
 
 	for _, queue := range queues {
-		row := make([]string, 3)
+		row := make([]string, 6)
 		row[0] = queue.Name
 		row[1] = boolToString(queue.Durable)
 		row[2] = boolToString(queue.AutoDelete)
+		row[3] = queue.Node
+		row[4] = strconv.Itoa(queue.Messages)
+		row[5] = strconv.Itoa(queue.MessagesUnAck)
 		table.Append(row)
 	}
 

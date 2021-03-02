@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -159,7 +160,7 @@ func (a *RabbitMQConfig) apiURI() string {
 		port = strconv.Itoa(apiDefaultPort)
 	}
 
-	uri := fmt.Sprintf("http://%s:%s", tokens[0], port)
+	uri := fmt.Sprintf("https://%s:%s", tokens[0], port)
 
 	return uri
 }
@@ -214,6 +215,15 @@ type Queue struct {
 	// AutoDelete determines whether the queue will be deleted automatically once
 	// there are no consumers to ready from it left. It won't be deleted by default.
 	AutoDelete bool
+
+	// Amount of messages in a queue
+	Messages int
+
+	// Leader Node for Queue
+	Node string
+
+	// Messages unacknowledged for Queue
+	MessagesUnAck int
 }
 
 // Binding represents an exchange- or queue binding.
@@ -300,7 +310,11 @@ func (b *buneary) setupChannel() error {
 // setupClient establishes a connection to the RabbitMQ HTTP API, initializing the
 // rabbit-hole client. It requires all connection data to exist in the configuration.
 func (b *buneary) setupClient() error {
-	client, err := rabbithole.NewClient(b.config.apiURI(), b.config.User, b.config.Password)
+	transport := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}
+
+	client, err := rabbithole.NewTLSClient(b.config.apiURI(), b.config.User, b.config.Password, transport)
 	if err != nil {
 		return fmt.Errorf("creating rabbit-hole client: %w", err)
 	}
@@ -411,9 +425,12 @@ func (b *buneary) GetQueues(filter func(queue Queue) bool) ([]Queue, error) {
 
 	for _, info := range queueInfos {
 		q := Queue{
-			Name:       info.Name,
-			Durable:    info.Durable,
-			AutoDelete: info.AutoDelete,
+			Name:          info.Name,
+			Durable:       info.Durable,
+			AutoDelete:    info.AutoDelete,
+			Messages:      info.Messages,
+			MessagesUnAck: info.MessagesUnacknowledged,
+			Node:          info.Node,
 		}
 
 		if filter(q) {
