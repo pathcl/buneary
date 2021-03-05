@@ -486,16 +486,17 @@ func runGetQueues(options *globalOptions, args []string) error {
 	}
 
 	table := tablewriter.NewWriter(os.Stdout)
-	table.SetHeader([]string{"Name", "Durable", "Auto-Delete", "Leader", "Messages", "MessagesUnAck"})
+	table.SetHeader([]string{"Name", "Durable", "Auto-Delete", "Leader", "Messages", "MessagesUnAck", "Memory"})
 
 	for _, queue := range queues {
-		row := make([]string, 6)
+		row := make([]string, 7)
 		row[0] = queue.Name
 		row[1] = boolToString(queue.Durable)
 		row[2] = boolToString(queue.AutoDelete)
 		row[3] = queue.Node
 		row[4] = strconv.Itoa(queue.Messages)
 		row[5] = strconv.Itoa(queue.MessagesUnAck)
+		row[6] = strconv.FormatInt(queue.Memory, 10)
 		table.Append(row)
 	}
 

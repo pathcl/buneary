@@ -224,6 +224,9 @@ type Queue struct {
 
 	// Messages unacknowledged for Queue
 	MessagesUnAck int
+
+	// Memory being used by queue
+	Memory int64
 }
 
 // Binding represents an exchange- or queue binding.
@@ -431,6 +434,7 @@ func (b *buneary) GetQueues(filter func(queue Queue) bool) ([]Queue, error) {
 			Messages:      info.Messages,
 			MessagesUnAck: info.MessagesUnacknowledged,
 			Node:          info.Node,
+			Memory:        info.Memory,
 		}
 
 		if filter(q) {
